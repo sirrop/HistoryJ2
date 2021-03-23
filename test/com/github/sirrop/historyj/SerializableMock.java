@@ -1,8 +1,12 @@
 package com.github.sirrop.historyj;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 public class SerializableMock implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
     private int value;
 
     public void setValue(int value) {

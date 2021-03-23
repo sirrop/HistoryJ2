@@ -117,7 +117,7 @@ public class BinaryHistory extends AbstractHistory<Serializable> {
         var stream = new ObjectInputStream(in);
         Serializable target = record.ref;
         if (target == null) {
-            throw new IllegalStateException("オブジェクトはすでに破棄誰ています。");
+            throw new IllegalStateException("オブジェクトはすでに破棄されています。");
         }
         Object restored = stream.readObject();
         Field[] fields = target.getClass().getDeclaredFields();
