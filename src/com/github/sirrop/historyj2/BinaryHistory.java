@@ -1,4 +1,4 @@
-package com.github.sirrop.historyj;
+package com.github.sirrop.historyj2;
 
 import java.io.*;
 import java.lang.reflect.Field;

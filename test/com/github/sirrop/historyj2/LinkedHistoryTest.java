@@ -1,15 +1,12 @@
-package com.github.sirrop.historyj;
-
-import org.junit.jupiter.api.Test;
-
-import java.io.Serializable;
+package com.github.sirrop.historyj2;
 
 import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
-public class BinaryHistoryTest {
+public class LinkedHistoryTest {
     @Test
     public void initializeTest() {
-        History<Serializable> history = new BinaryHistory();
+        History<Integer> history = new LinkedHistory<>();
         assertAll("default config",
                 () -> assertFalse(history.canRedo()),
                 () -> assertFalse(history.canUndo()),
@@ -18,7 +15,7 @@ public class BinaryHistoryTest {
                 () -> assertNull(history.currentRecord())
         );
 
-        History<Serializable> history1 = new BinaryHistory(200);
+        History<Integer> history1 = new LinkedHistory<>(200);
         assertAll("specified config",
                 () -> assertFalse(history1.canRedo()),
                 () -> assertFalse(history1.canUndo()),
@@ -30,9 +27,10 @@ public class BinaryHistoryTest {
 
     @Test
     public void addTest() {
-        BinaryHistory history = new BinaryHistory();
+        LinkedHistory<Integer> history = new LinkedHistory<>();
         history.add(0);
         assertAll(
+                () -> assertEquals(history.get(0), 0),
                 () -> assertFalse(history.canRedo()),
                 () -> assertFalse(history.canUndo()),
                 () -> assertEquals(history.getCapacity(), 100),
@@ -42,6 +40,8 @@ public class BinaryHistoryTest {
 
         history.add(1);
         assertAll(
+                () -> assertEquals(history.get(0), 0),
+                () -> assertEquals(history.get(1), 1),
                 () -> assertFalse(history.canRedo()),
                 () -> assertTrue(history.canUndo()),
                 () -> assertEquals(history.getCapacity(), 100),
@@ -54,6 +54,7 @@ public class BinaryHistoryTest {
         }
 
         assertAll(
+                () -> assertEquals(history.get(0), 2),
                 () -> assertFalse(history.canRedo()),
                 () -> assertTrue(history.canUndo()),
                 () -> assertEquals(history.getCapacity(), 100),
@@ -64,22 +65,21 @@ public class BinaryHistoryTest {
 
     @Test
     public void undoAndRedoTest() {
-        BinaryHistory history = new BinaryHistory();
-        SerializableMock mock = SerializableMock.createRandom();
-        history.add(mock);
-        int index0 = mock.getValue();
-        int index1 = 1;
-        int index2 = 2;
-
-        mock.setValue(index1);
-        history.add(mock);
-
-        mock.setValue(index2);
-        history.add(mock);
-
-        history.undo();
-        assertEquals(index1, mock.getValue());
-        history.undo();
-        assertEquals(index0, mock.getValue());
+        LinkedHistory<Integer> history = new LinkedHistory<>();
+        for (int i = 0; i < 100; i++) {
+            history.add(i);
+        }
+        for (int i = 0; i < 5; i++) {
+            history.undo();
+        }
+        assertAll(
+                () -> assertEquals(94, history.currentIndex()),
+                () -> assertEquals(94, history.currentRecord()),
+                () -> assertTrue(history.canUndo()),
+                () -> assertTrue(history.canRedo())
+        );
+        history.redo();
+        assertEquals(95, history.currentIndex());
+        assertEquals(95, history.currentRecord());
     }
 }
