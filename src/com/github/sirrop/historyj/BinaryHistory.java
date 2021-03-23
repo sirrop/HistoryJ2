@@ -1,8 +1,6 @@
 package com.github.sirrop.historyj;
 
 import java.io.*;
-import java.lang.ref.SoftReference;
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 
 /**
