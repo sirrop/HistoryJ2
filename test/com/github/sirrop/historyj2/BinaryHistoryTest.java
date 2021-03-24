@@ -82,4 +82,46 @@ public class BinaryHistoryTest {
         history.undo();
         assertEquals(index0, mock.getValue());
     }
+
+    @Test
+    public void updateObjectTest() {
+        BinaryHistory history = new BinaryHistory();
+        UpdateObjectMock mock = new UpdateObjectMock();
+        history.add(mock);
+        int index0 = mock.getValue();
+        int index1 = 1;
+        int index2 = 2;
+
+        mock.setValue(index1);
+        history.add(mock);
+
+        mock.setValue(index2);
+        history.add(mock);
+
+        history.undo();
+        assertEquals(index1, mock.getValue());
+        history.undo();
+        assertEquals(index0, mock.getValue());
+    }
+
+    @Test
+    public void updateObject2Test() {
+        BinaryHistory history = new BinaryHistory();
+        UpdateObjectMock2 mock = new UpdateObjectMock2();
+        history.add(mock);
+        int index0 = mock.getValue();
+        int index1 = 1;
+        int index2 = 2;
+
+        mock.setValue(index1);
+        history.add(mock);
+
+        mock.setValue(index2);
+        history.add(mock);
+
+        history.undo();
+        assertEquals(index1, mock.getValue());
+        history.undo();
+        assertEquals(index0, mock.getValue());
+    }
 }

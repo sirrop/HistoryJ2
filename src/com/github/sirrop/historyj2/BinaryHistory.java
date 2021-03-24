@@ -1,12 +1,22 @@
 package com.github.sirrop.historyj2;
 
+import com.github.sirrop.historyj2.annotation.History;
+
 import java.io.*;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * 直列化を使用した履歴オブジェクトです。直列化可能なオブジェクトしか登録できない代わりに、
  * {@link BinaryHistory#undo()}, {@link BinaryHistory#redo()}を使用すると登録する際に使用した
  * オブジェクトの状態を戻り値のオブジェクトの状態に変更します。
+ *
+ * <p>
+ *     デフォルトではフィールドに直接代入を行います。直接代入したくない場合は、
+ *     {@link History.Update}を付与した、自身と同じ型を引数にとるメソッドを定義することで
+ *     更新処理をそのメソッドに委譲することが出来ます。
+ * </p>
  */
 public class BinaryHistory extends AbstractHistory<Serializable> {
     private static class Record {
@@ -82,7 +92,7 @@ public class BinaryHistory extends AbstractHistory<Serializable> {
         Record record = delegate.undo();
         try {
             return restore(record);
-        } catch (IOException | ClassNotFoundException | IllegalAccessException e) {
+        } catch (IOException | ClassNotFoundException | IllegalAccessException | InvocationTargetException e) {
             throw new IllegalStateException("Can't undo", e);
         }
     }
@@ -95,7 +105,7 @@ public class BinaryHistory extends AbstractHistory<Serializable> {
         Record record = delegate.redo();
         try {
             return restore(record);
-        } catch (IOException | ClassNotFoundException | IllegalAccessException e) {
+        } catch (IOException | ClassNotFoundException | IllegalAccessException | InvocationTargetException e) {
             throw new IllegalStateException("Can't redo", e);
         }
     }
@@ -112,7 +122,7 @@ public class BinaryHistory extends AbstractHistory<Serializable> {
         return result;
     }
 
-    private Serializable restore(Record record) throws IOException, ClassNotFoundException, IllegalAccessException {
+    private Serializable restore(Record record) throws IOException, ClassNotFoundException, IllegalAccessException, InvocationTargetException {
         var in = new ByteArrayInputStream(record.data);
         var stream = new ObjectInputStream(in);
         Serializable target = record.ref;
@@ -120,11 +130,31 @@ public class BinaryHistory extends AbstractHistory<Serializable> {
             throw new IllegalStateException("オブジェクトはすでに破棄されています。");
         }
         Object restored = stream.readObject();
+        var success = updateObjectIfPresent(target, restored);
+        if (success) {
+            return target;
+        }
         Field[] fields = target.getClass().getDeclaredFields();
         for (Field field: fields) {
             field.setAccessible(true);
             field.set(target, field.get(restored));
         }
         return target;
+    }
+
+    private boolean updateObjectIfPresent(Serializable target, Object restored) {
+        var result = false;
+        try {
+            Method[] methods = target.getClass().getDeclaredMethods();
+            for (Method method: methods) {
+                if (method.isAnnotationPresent(History.Update.class)) {
+                    method.setAccessible(true);
+                    method.invoke(target, restored);
+                    result = true;
+                }
+            }
+        } catch (IllegalAccessException | InvocationTargetException ignored) {
+        }
+        return result;
     }
 }
